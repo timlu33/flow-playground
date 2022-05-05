@@ -26,6 +26,8 @@ class MainViewModel: ViewModel() {
     private val _liveData = MutableLiveData<Int>()
     val liveData: LiveData<Int> = _liveData
 
+    val singleLiveEvent = SingleLiveEvent<Int>()
+
     //TODO 補一個live data case
 
     // 不會emit same value
@@ -33,7 +35,7 @@ class MainViewModel: ViewModel() {
     val stateFlow = _stateFlow.asStateFlow()
 
     private val _sharedFlow = MutableSharedFlow<Int>()
-    val sharedFlow = _sharedFlow.asSharedFlow()
+    val sharedFlow = _sharedFlow.asSharedFlow().shareIn(viewModelScope, replay = 1, started = SharingStarted.WhileSubscribed())
 
     init {
         collectFlow()
@@ -42,23 +44,23 @@ class MainViewModel: ViewModel() {
 
     @OptIn(FlowPreview::class)
     private fun collectFlow() {
-        val flow = flow {
-            delay(250L)
-            emit("前菜")
-            delay(1000L)
-            emit("主菜")
-            delay(100L)
-            emit("甜點")
-        }
-        viewModelScope.launch {
-            flow.onEach {
-                println("Flow: $it 到了")
-            }.collectLatest {
-                println("Flow: 正在吃 $it")
-                delay(1500L)
-                println("Flow: 吃完 $it")
-            }
-        }
+//        val flow = flow {
+//            delay(250L)
+//            emit("前菜")
+//            delay(1000L)
+//            emit("主菜")
+//            delay(100L)
+//            emit("甜點")
+//        }
+//        viewModelScope.launch {
+//            flow.onEach {
+//                println("Flow: $it 到了")
+//            }.collectLatest {
+//                println("Flow: 正在吃 $it")
+//                delay(1500L)
+//                println("Flow: 吃完 $it")
+//            }
+//        }
         val p = Person(1)
         val flow2 = flow {
             for (i in 1..10) {
@@ -67,14 +69,15 @@ class MainViewModel: ViewModel() {
             }
         }
 
-//        viewModelScope.launch {
-//            flow2.collect {
-//                println("emit $it")
-////                _liveData.postValue(it.name)
-//                _stateFlow.value = it
-//                _sharedFlow.emit(it)
-//            }
-//        }
+        viewModelScope.launch {
+            flow2.collect {
+                println("emit $it")
+                _liveData.postValue(it)
+                singleLiveEvent.value = it
+                _stateFlow.value = it
+                _sharedFlow.emit(it)
+            }
+        }
 
 
     }

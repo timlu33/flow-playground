@@ -30,18 +30,28 @@ class MainActivity : ComponentActivity() {
                 val viewModel = viewModel<MainViewModel>()
 
                 viewModel.liveData.observe(this) {
-                    println("consume $it")
+                    println("live data consume $it")
+                }
+
+                viewModel.singleLiveEvent.observe(this) {
+                    println("single live event consume $it")
+                }
+
+                LaunchedEffect(key1 = true) {
+                    viewModel.sharedFlow.flowWithLifecycle(lifecycle, Lifecycle.State.STARTED).collect {
+                        println("shared flow consume $it")
+                    }
                 }
 
 
                 LaunchedEffect(key1 = true) {
                     viewModel.stateFlow.flowWithLifecycle(lifecycle, Lifecycle.State.STARTED).collect {
-                        println("consume $it")
+                        println("state flow consume $it")
                     }
                 }
 
                 val time = viewModel.countDownFlow.collectAsState(initial = 10)
-                // A surface container using the 'background' color from the theme
+
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colors.background
